@@ -12,14 +12,15 @@ Actualmente están disponibles:
 - Explorador de logs con búsqueda, filtros, paginación y vista de detalle.
 - Gestión visual de incidentes con filtros, estados, actividad y logs relacionados.
 - Catálogo de alertas con búsqueda, filtros y activación o desactivación local.
+- Asistente conversacional mock con preguntas sugeridas y respuestas basadas en los datos de demostración.
 - Layout responsive para escritorio, tablet y móvil.
 - Rutas preparadas para aplicaciones, usuarios y configuración.
 
-Los datos, estados y cambios mostrados en la interfaz son locales y se reinician al recargar la aplicación.
+Los datos, estados, conversaciones y cambios mostrados en la interfaz son locales y se reinician al recargar la aplicación. El asistente está identificado como demostración y no consume ningún modelo o API de inteligencia artificial.
 
 ## Funcionalidades previstas
 
-El alcance futuro contempla autenticación y roles, conexiones URL/SSH, ingestión de archivos grandes, análisis mediante inteligencia artificial, consultas en lenguaje natural, correlación de eventos, auditorías, retención de datos, canales de notificación y respaldo de configuraciones.
+El alcance futuro contempla autenticación y roles, conexiones URL/SSH, ingestión de archivos grandes, integración real con inteligencia artificial, análisis avanzado de logs, correlación de eventos, auditorías, retención de datos, canales de notificación y respaldo de configuraciones.
 
 Estos puntos permanecen documentados como trabajo pendiente en [TASK-006](tasks/TASK-006-alineacion-requisitos-equipo.md). Su presencia en el backlog no significa que estén implementados.
 
@@ -61,6 +62,7 @@ La descripción técnica completa se encuentra en [docs/architecture.md](docs/ar
 LogSentinel/
 ├── src/
 │   ├── components/
+│   │   ├── ai-assistant/ Asistente conversacional de demostración
 │   │   ├── alerts/       Componentes propios de alertas
 │   │   ├── dashboard/    Componentes del dashboard
 │   │   ├── incidents/    Componentes de incidentes
@@ -68,7 +70,9 @@ LogSentinel/
 │   │   ├── logs/         Componentes propios del visor de logs
 │   │   └── ui/           Componentes compartidos
 │   ├── data/             Datos mock separados de la interfaz
+│   ├── hooks/            Estado reutilizable de la interfaz
 │   ├── pages/            Pantallas asociadas a las rutas
+│   ├── services/         Reglas locales y simulación de respuestas
 │   ├── styles/           Estilos globales
 │   └── types/            Tipos de dominio
 ├── docs/                 Arquitectura y documentación funcional

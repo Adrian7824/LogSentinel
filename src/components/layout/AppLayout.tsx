@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
+import { AiAssistant } from '../ai-assistant/AiAssistant'
 import { Header } from './Header'
 import { Sidebar } from './Sidebar'
 
@@ -18,6 +19,7 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
+      <AiAssistant />
     </div>
   )
 }
