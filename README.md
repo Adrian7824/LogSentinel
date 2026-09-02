@@ -12,11 +12,11 @@ Actualmente están disponibles:
 - Explorador de logs con búsqueda, filtros, paginación y vista de detalle.
 - Gestión visual de incidentes con filtros, estados, actividad y logs relacionados.
 - Catálogo de alertas con búsqueda, filtros y activación o desactivación local.
+- Catálogo mock de aplicaciones con salud visual, metadata y contexto derivado de logs, incidentes y alertas.
 - Asistente conversacional mock con análisis estructurado de logs e incidentes, consultas por reglas, resúmenes y detección simulada de patrones.
 - Administración mock de usuarios con roles, permisos por módulo y políticas horarias de acceso.
 - Configuración mock organizada por secciones, con preferencias de observabilidad, retención, notificaciones, seguridad y conexiones.
 - Layout responsive para escritorio, tablet y móvil.
-- Ruta preparada para aplicaciones.
 
 Los datos, estados, conversaciones y cambios mostrados en la interfaz son locales y se reinician al recargar la aplicación. El asistente está identificado como demostración y no consume ningún modelo o API de inteligencia artificial.
 
@@ -66,6 +66,7 @@ LogSentinel/
 │   ├── components/
 │   │   ├── ai-assistant/ Asistente conversacional de demostración
 │   │   ├── alerts/       Componentes propios de alertas
+│   │   ├── applications/ Catálogo mock de aplicaciones
 │   │   ├── dashboard/    Componentes del dashboard
 │   │   ├── incidents/    Componentes de incidentes
 │   │   ├── layout/       Sidebar, header y layout principal
@@ -125,7 +126,7 @@ El uso de `npm.cmd` permite ejecutar el proyecto en Windows aunque PowerShell te
 | `/logs` | Exploración y detalle de logs |
 | `/incidentes` | Seguimiento de incidentes |
 | `/alertas` | Administración visual de reglas de alerta |
-| `/aplicaciones` | Espacio preparado para aplicaciones |
+| `/aplicaciones` | Catálogo mock y contexto de observabilidad |
 | `/usuarios` | Administración mock de usuarios, roles y acceso |
 | `/configuracion` | Configuración mock general y administrativa |
 

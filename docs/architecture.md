@@ -54,6 +54,8 @@ La sección de usuarios representa visualmente el modelo RBAC esperado mediante 
 
 La pantalla de configuración utiliza el mismo patrón de sesión local: mantiene un borrador en React y solo actualiza el servicio mock en memoria cuando el usuario guarda. Las secciones de retención, notificaciones, seguridad y conexiones representan contratos visuales futuros; no eliminan datos, envían mensajes, abren conexiones ni ejecutan controles de seguridad reales.
 
+El catálogo de aplicaciones conserva su metadata en un servicio local en memoria y calcula el contexto de observabilidad cruzando por nombre los logs, incidentes y alertas mock existentes. Registrar o pausar una aplicación solo modifica la representación visual; no crea agentes, fuentes de datos ni conexiones de red. La administración de conexiones permanece separada para su alcance posterior.
+
 ## Backend
 
 FastAPI será responsable de:
