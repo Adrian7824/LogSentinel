@@ -1,10 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { IncidentDetailPanel } from '../components/incidents/IncidentDetailPanel'
 import { IncidentFilters } from '../components/incidents/IncidentFilters'
 import { IncidentsTable } from '../components/incidents/IncidentsTable'
 import { Pagination } from '../components/ui/Pagination'
 import { Icon } from '../components/icons/Icon'
 import { mockIncidents } from '../data/incidentsMock'
+import { useAiAssistantActions } from '../hooks/useAiAssistantActions'
 import type { Incident, IncidentFiltersState, IncidentStatus } from '../types/incident'
 
 const pageSize = 6
@@ -17,9 +19,20 @@ const summaryConfig: Array<{ status: IncidentStatus; label: string; style: strin
 ]
 
 export function IncidentsPage() {
+  const [searchParams] = useSearchParams()
+  const { openAssistant } = useAiAssistantActions()
   const [filters, setFilters] = useState<IncidentFiltersState>(initialFilters)
   const [page, setPage] = useState(1)
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null)
+
+  useEffect(() => {
+    const linkedIncidentId = searchParams.get('incident')
+    if (linkedIncidentId) {
+      setSelectedIncident(
+        mockIncidents.find((incident) => incident.id === linkedIncidentId) ?? null,
+      )
+    }
+  }, [searchParams])
 
   const filteredIncidents = useMemo(
     () =>
@@ -108,6 +121,10 @@ export function IncidentsPage() {
 
       <IncidentDetailPanel
         incident={selectedIncident}
+        onAnalyze={(incident) => {
+          setSelectedIncident(null)
+          openAssistant(`Analiza el incidente ${incident.id}`)
+        }}
         onClose={() => setSelectedIncident(null)}
       />
     </section>

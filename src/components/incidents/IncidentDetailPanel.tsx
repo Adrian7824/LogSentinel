@@ -8,6 +8,7 @@ import { IncidentStatusBadge } from './IncidentStatusBadge'
 type IncidentDetailPanelProps = {
   incident: Incident | null
   onClose: () => void
+  onAnalyze: (incident: Incident) => void
 }
 
 const fullDateFormatter = new Intl.DateTimeFormat('es-MX', {
@@ -15,7 +16,7 @@ const fullDateFormatter = new Intl.DateTimeFormat('es-MX', {
   timeStyle: 'short',
 })
 
-export function IncidentDetailPanel({ incident, onClose }: IncidentDetailPanelProps) {
+export function IncidentDetailPanel({ incident, onClose, onAnalyze }: IncidentDetailPanelProps) {
   if (!incident) return null
 
   return (
@@ -32,6 +33,18 @@ export function IncidentDetailPanel({ incident, onClose }: IncidentDetailPanelPr
     >
       <h3 className="text-base font-semibold leading-6 text-slate-900">{incident.title}</h3>
       <p className="mt-3 text-sm leading-6 text-slate-600">{incident.description}</p>
+
+      <button
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-ink-800 px-4 py-3 text-xs font-semibold text-white shadow-sm transition hover:bg-ink-700 sm:w-auto"
+        onClick={() => onAnalyze(incident)}
+        type="button"
+      >
+        <Icon className="h-4 w-4 text-cyan-300" name="sparkles" />
+        Analizar con IA
+        <span className="rounded bg-white/10 px-1.5 py-0.5 text-[8px] uppercase tracking-wider text-slate-300">
+          Mock
+        </span>
+      </button>
 
       <dl className="mt-6 grid grid-cols-1 gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:grid-cols-2">
         <div>

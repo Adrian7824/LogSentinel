@@ -8,6 +8,7 @@ function createMessage(
   role: AiMessage['role'],
   content: string,
   evidence?: AiMessage['evidence'],
+  analysis?: AiMessage['analysis'],
 ): AiMessage {
   return {
     id,
@@ -15,6 +16,7 @@ function createMessage(
     content,
     createdAt: new Date().toISOString(),
     evidence,
+    analysis,
   }
 }
 
@@ -54,6 +56,7 @@ export function useAiAssistant() {
           'assistant',
           response.content,
           response.evidence,
+          response.analysis,
         ),
       ])
       setIsLoading(false)

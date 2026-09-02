@@ -5,22 +5,14 @@ import { DashboardPage } from './pages/DashboardPage'
 import { IncidentsPage } from './pages/IncidentsPage'
 import { LogsPage } from './pages/LogsPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
+import { SettingsPage } from './pages/SettingsPage'
+import { UsersPage } from './pages/UsersPage'
 
 const pages = [
   {
     path: 'aplicaciones',
     title: 'Aplicaciones',
     description: 'Administra los servicios y aplicaciones monitoreados.',
-  },
-  {
-    path: 'usuarios',
-    title: 'Usuarios',
-    description: 'Analiza la actividad de usuarios registrada en los eventos.',
-  },
-  {
-    path: 'configuracion',
-    title: 'Configuración',
-    description: 'Ajusta las preferencias generales de LogSentinel.',
   },
 ] as const
 
@@ -33,6 +25,8 @@ export function App() {
         <Route path="logs" element={<LogsPage />} />
         <Route path="incidentes" element={<IncidentsPage />} />
         <Route path="alertas" element={<AlertsPage />} />
+        <Route path="usuarios" element={<UsersPage />} />
+        <Route path="configuracion" element={<SettingsPage />} />
         {pages.map((page) => (
           <Route
             key={page.path}

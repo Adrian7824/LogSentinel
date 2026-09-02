@@ -4,6 +4,7 @@ import { Icon } from '../icons/Icon'
 
 type AiMessageProps = {
   message: AiMessageType
+  onNavigate: () => void
 }
 
 const timeFormatter = new Intl.DateTimeFormat('es-MX', {
@@ -11,7 +12,7 @@ const timeFormatter = new Intl.DateTimeFormat('es-MX', {
   minute: '2-digit',
 })
 
-export function AiMessage({ message }: AiMessageProps) {
+export function AiMessage({ message, onNavigate }: AiMessageProps) {
   const isAssistant = message.role === 'assistant'
 
   return (
@@ -30,12 +31,30 @@ export function AiMessage({ message }: AiMessageProps) {
           }`}
         >
           <p className="whitespace-pre-wrap">{message.content}</p>
+          {message.analysis && message.analysis.length > 0 && (
+            <div className="mt-3 space-y-2.5">
+              {message.analysis.map((section, index) => (
+                <section
+                  className="rounded-xl border border-slate-100 bg-slate-50/80 p-3"
+                  key={`${message.id}-${section.title}-${index}`}
+                >
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-cyan-700">
+                    {section.title}
+                  </h3>
+                  <p className="mt-1 whitespace-pre-wrap text-[11px] leading-5 text-slate-600">
+                    {section.content}
+                  </p>
+                </section>
+              ))}
+            </div>
+          )}
           {message.evidence && message.evidence.length > 0 && (
             <div className={`mt-3 flex flex-wrap gap-2 border-t pt-2.5 ${isAssistant ? 'border-slate-100' : 'border-white/10'}`}>
               {message.evidence.map((evidence) => (
                 <Link
                   className="inline-flex items-center gap-1 rounded-lg bg-cyan-50 px-2 py-1 text-[10px] font-semibold text-cyan-700 transition hover:bg-cyan-100"
                   key={`${message.id}-${evidence.label}`}
+                  onClick={onNavigate}
                   to={evidence.path}
                 >
                   {evidence.label}

@@ -1,10 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Icon } from '../components/icons/Icon'
 import { LogDetailPanel } from '../components/logs/LogDetailPanel'
 import { LogFilters } from '../components/logs/LogFilters'
 import { LogsTable } from '../components/logs/LogsTable'
 import { Pagination } from '../components/ui/Pagination'
 import { logApplications, mockLogs } from '../data/logsMock'
+import { useAiAssistantActions } from '../hooks/useAiAssistantActions'
 import type { LogEntry, LogFiltersState, LogTimeRange } from '../types/log'
 
 const pageSize = 7
@@ -24,9 +26,24 @@ const rangeInMilliseconds: Record<Exclude<LogTimeRange, 'all'>, number> = {
 }
 
 export function LogsPage() {
+  const [searchParams] = useSearchParams()
+  const { openAssistant } = useAiAssistantActions()
   const [filters, setFilters] = useState<LogFiltersState>(initialFilters)
   const [page, setPage] = useState(1)
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null)
+
+  useEffect(() => {
+    const linkedLogId = searchParams.get('log')
+    const linkedSearch = searchParams.get('search')
+
+    if (linkedLogId) {
+      setSelectedLog(mockLogs.find((log) => log.id === linkedLogId) ?? null)
+    }
+    if (linkedSearch) {
+      setFilters((currentFilters) => ({ ...currentFilters, search: linkedSearch }))
+      setPage(1)
+    }
+  }, [searchParams])
 
   const filteredLogs = useMemo(() => {
     const normalizedSearch = filters.search.trim().toLocaleLowerCase('es-MX')
@@ -105,7 +122,24 @@ export function LogsPage() {
               {filteredLogs.length} {filteredLogs.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}
             </p>
           </div>
-          <p className="font-mono text-[10px] text-slate-400">Orden: más recientes primero</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-[10px] font-semibold text-cyan-700 transition hover:bg-cyan-100"
+              onClick={() => openAssistant('Resume los eventos recientes')}
+              type="button"
+            >
+              <Icon className="h-3.5 w-3.5" name="sparkles" />
+              Resumir eventos
+            </button>
+            <button
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold text-slate-600 transition hover:border-cyan-200 hover:text-cyan-700"
+              onClick={() => openAssistant('Detecta patrones en los logs')}
+              type="button"
+            >
+              <Icon className="h-3.5 w-3.5" name="sparkles" />
+              Detectar patrones
+            </button>
+          </div>
         </div>
 
         <LogsTable logs={visibleLogs} onSelect={setSelectedLog} />
@@ -118,7 +152,14 @@ export function LogsPage() {
         />
       </div>
 
-      <LogDetailPanel log={selectedLog} onClose={() => setSelectedLog(null)} />
+      <LogDetailPanel
+        log={selectedLog}
+        onAnalyze={(log) => {
+          setSelectedLog(null)
+          openAssistant(`Explica el log ${log.id}`)
+        }}
+        onClose={() => setSelectedLog(null)}
+      />
     </section>
   )
 }

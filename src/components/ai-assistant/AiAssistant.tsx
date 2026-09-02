@@ -1,11 +1,24 @@
-import { useState } from 'react'
-import { useAiAssistant } from '../../hooks/useAiAssistant'
+import type { AiMessage } from '../../types/aiAssistant'
 import { Icon } from '../icons/Icon'
 import { AiChatPanel } from './AiChatPanel'
 
-export function AiAssistant() {
-  const [isOpen, setIsOpen] = useState(false)
-  const { messages, isLoading, sendMessage } = useAiAssistant()
+type AiAssistantProps = {
+  messages: AiMessage[]
+  isLoading: boolean
+  isOpen: boolean
+  onClose: () => void
+  onOpen: () => void
+  onSend: (message: string) => void
+}
+
+export function AiAssistant({
+  messages,
+  isLoading,
+  isOpen,
+  onClose,
+  onOpen,
+  onSend,
+}: AiAssistantProps) {
 
   return (
     <>
@@ -13,7 +26,7 @@ export function AiAssistant() {
         <button
           aria-label="Abrir asistente IA de demostración"
           className="fixed bottom-4 right-4 z-30 flex items-center gap-2 rounded-2xl bg-ink-800 p-3.5 text-white shadow-xl shadow-slate-950/20 transition hover:-translate-y-0.5 hover:bg-ink-700 sm:bottom-6 sm:right-6 sm:px-4"
-          onClick={() => setIsOpen(true)}
+          onClick={onOpen}
           type="button"
         >
           <span className="relative grid h-7 w-7 place-items-center rounded-lg bg-cyan-400 text-ink-900">
@@ -31,8 +44,8 @@ export function AiAssistant() {
         <AiChatPanel
           isLoading={isLoading}
           messages={messages}
-          onClose={() => setIsOpen(false)}
-          onSend={sendMessage}
+          onClose={onClose}
+          onSend={onSend}
         />
       )}
     </>

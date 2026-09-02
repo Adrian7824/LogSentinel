@@ -3,6 +3,13 @@ import { mockIncidents } from '../data/incidentsMock'
 import { mockLogs } from '../data/logsMock'
 import type { AiMockResponse } from '../types/aiAssistant'
 import type { LogEntry } from '../types/log'
+import {
+  buildSearchResultMock,
+  detectPatternsMock,
+  explainLogMock,
+  findRelatedLogs,
+  summarizeEventsMock,
+} from './aiLogAnalysisMockService'
 
 const oneDayInMilliseconds = 24 * 60 * 60 * 1000
 
@@ -24,17 +31,23 @@ function getErrorLogs(logs: LogEntry[]) {
   return logs.filter((log) => log.severity === 'ERROR' || log.severity === 'CRITICAL')
 }
 
-function summarizeLog(log: LogEntry) {
-  return `${log.application} registró ${log.severity}: “${log.message}”. El evento provino de ${log.source}, tardó ${log.durationMs.toLocaleString('es-MX')} ms y utiliza el trace ID ${log.traceId}.`
-}
-
 function answerTraceQuestion(question: string): AiMockResponse | null {
+  const normalizedQuestion = normalize(question)
   const traceId = question.match(/trc-[a-z0-9-]+/i)?.[0]
 
-  if (!traceId && normalize(question).includes('trace id')) {
+  if (!traceId && normalizedQuestion.includes('trace id')) {
     return {
-      content:
-        'Incluye un trace ID concreto, por ejemplo “trc-7f4a91c2d810”, para buscar eventos relacionados en los datos disponibles.',
+      content: 'Consulta simulada de trazabilidad',
+      analysis: [
+        {
+          title: 'Resumen',
+          content: 'Necesito un trace ID concreto para buscar coincidencias en los datos mock.',
+        },
+        {
+          title: 'Recomendación',
+          content: 'Prueba con “¿Qué pasó con trc-7f4a91c2d810?”.',
+        },
+      ],
       evidence: [{ label: 'Abrir explorador de logs', path: '/logs' }],
     }
   }
@@ -45,17 +58,11 @@ function answerTraceQuestion(question: string): AiMockResponse | null {
     (log) => normalize(log.traceId) === normalize(traceId),
   )
 
-  if (relatedLogs.length === 0) {
-    return {
-      content: `No encontré eventos asociados con ${traceId} en los datos mock disponibles.`,
-      evidence: [{ label: 'Buscar en logs', path: '/logs' }],
-    }
-  }
-
-  return {
-    content: `Encontré ${relatedLogs.length} evento${relatedLogs.length === 1 ? '' : 's'} para ${traceId}. ${relatedLogs.map(summarizeLog).join(' ')}`,
-    evidence: [{ label: 'Revisar logs', path: '/logs' }],
-  }
+  return buildSearchResultMock(
+    `Trazabilidad simulada de ${traceId}`,
+    relatedLogs,
+    `No encontré eventos asociados con ${traceId} en los datos mock disponibles.`,
+  )
 }
 
 function answerLogExplanation(question: string): AiMockResponse | null {
@@ -74,17 +81,58 @@ function answerLogExplanation(question: string): AiMockResponse | null {
     }
   }
 
-  const context = requestedLogId
-    ? `El log ${selectedLog.id}`
-    : `Tomando como ejemplo el evento reciente ${selectedLog.id}`
+  return explainLogMock(selectedLog, mockLogs)
+}
+
+function answerIncidentAnalysis(question: string): AiMockResponse | null {
+  const normalizedQuestion = normalize(question)
+  const incidentId = question.match(/INC-\d+/i)?.[0]
+  if (!incidentId || (!normalizedQuestion.includes('analiza') && !normalizedQuestion.includes('explica'))) {
+    return null
+  }
+
+  const incident = mockIncidents.find(
+    (item) => normalize(item.id) === normalize(incidentId),
+  )
+  if (!incident) {
+    return {
+      content: `No encontré ${incidentId} en los incidentes mock.`,
+      evidence: [{ label: 'Ver incidentes', path: '/incidentes' }],
+    }
+  }
+
+  const relatedLogs = mockLogs.filter((log) => incident.relatedLogIds.includes(log.id))
 
   return {
-    content: `${context}: ${summarizeLog(selectedLog)} ${selectedLog.incidentId ? `Además, está relacionado con el incidente ${selectedLog.incidentId}.` : 'No tiene un incidente relacionado en esta demostración.'}`,
+    content: `Análisis simulado de ${incident.id}`,
+    analysis: [
+      {
+        title: 'Resumen',
+        content: `${incident.title}. Afecta a ${incident.application}, tiene severidad ${incident.severity} y estado ${incident.status}.`,
+      },
+      {
+        title: 'Evidencia encontrada',
+        content: `${incident.description} Logs relacionados: ${relatedLogs.map((log) => `${log.id} (${log.traceId})`).join(', ') || 'ninguno en la muestra'}.`,
+      },
+      {
+        title: 'Posible causa',
+        content: `Los eventos disponibles sugieren una condición relacionada con “${incident.source}”, pero la demostración no confirma causalidad.`,
+      },
+      {
+        title: 'Recomendación',
+        content: `Sería recomendable revisar la actividad de ${incident.application}, abrir sus logs relacionados y validar la evidencia antes de cambiar el estado del incidente.`,
+      },
+    ],
     evidence: [
-      { label: `Ver ${selectedLog.id}`, path: '/logs' },
-      ...(selectedLog.incidentId
-        ? [{ label: `Ver ${selectedLog.incidentId}`, path: '/incidentes' } as const]
-        : []),
+      { label: `Ver ${incident.id}`, path: `/incidentes?incident=${incident.id}` },
+      ...relatedLogs.slice(0, 1).map((log) => ({
+        label: `Ver ${log.id}`,
+        path: `/logs?log=${log.id}` as const,
+      })),
+      {
+        label: `Ver ${incident.application}`,
+        path: `/aplicaciones?app=${encodeURIComponent(incident.application)}`,
+      },
     ],
   }
 }
@@ -92,24 +140,49 @@ function answerLogExplanation(question: string): AiMockResponse | null {
 function answerCriticalErrors(normalizedQuestion: string): AiMockResponse | null {
   if (!normalizedQuestion.includes('critico') || !normalizedQuestion.includes('error')) return null
 
-  const criticalLogs = getRecentLogs().filter((log) => log.severity === 'CRITICAL')
-  if (criticalLogs.length === 0) {
-    return { content: 'No hay errores críticos en las últimas 24 horas de datos mock.' }
+  return buildSearchResultMock(
+    'Errores críticos encontrados',
+    getRecentLogs().filter((log) => log.severity === 'CRITICAL'),
+    'No hay errores críticos en las últimas 24 horas de datos mock.',
+  )
+}
+
+function answerFiveHundreds(normalizedQuestion: string): AiMockResponse | null {
+  if (!/\b5\d\d\b/.test(normalizedQuestion) && !normalizedQuestion.includes('errores 500')) {
+    return null
   }
 
-  return {
-    content: `Encontré ${criticalLogs.length} error${criticalLogs.length === 1 ? '' : 'es'} crítico${criticalLogs.length === 1 ? '' : 's'} en las últimas 24 horas. ${criticalLogs.map((log) => `${log.application}: ${log.message}`).join(' ')}`,
-    evidence: [
-      { label: 'Ver logs críticos', path: '/logs' },
-      { label: 'Revisar incidentes', path: '/incidentes' },
-    ],
-  }
+  const matches = mockLogs.filter((log) => {
+    const statusCode = Number(log.metadata.status_code)
+    return statusCode >= 500 && statusCode < 600
+  })
+
+  return buildSearchResultMock(
+    'Respuestas 5xx encontradas',
+    matches,
+    'No encontré respuestas 5xx en los datos mock.',
+  )
+}
+
+function answerPaymentErrors(normalizedQuestion: string): AiMockResponse | null {
+  if (!normalizedQuestion.includes('payment') && !normalizedQuestion.includes('pago')) return null
+  if (!normalizedQuestion.includes('error') && !normalizedQuestion.includes('falla')) return null
+
+  const matches = getErrorLogs(mockLogs).filter((log) =>
+    normalize(`${log.application} ${log.message} ${log.raw}`).includes('payment'),
+  )
+
+  return buildSearchResultMock(
+    'Errores relacionados con pagos',
+    matches,
+    'No encontré errores relacionados con payments-service o pagos en los datos mock.',
+  )
 }
 
 function answerTopErrorApplication(normalizedQuestion: string): AiMockResponse | null {
   if (
     !normalizedQuestion.includes('aplicacion') ||
-    !normalizedQuestion.includes('mas errores')
+    (!normalizedQuestion.includes('mas errores') && !normalizedQuestion.includes('mas fallas'))
   ) {
     return null
   }
@@ -124,28 +197,42 @@ function answerTopErrorApplication(normalizedQuestion: string): AiMockResponse |
     return { content: 'No encontré errores recientes para comparar aplicaciones.' }
   }
 
-  return {
-    content: `${topApplication[0]} es la aplicación con más errores en las últimas 24 horas del conjunto mock, con ${topApplication[1]} evento${topApplication[1] === 1 ? '' : 's'} de severidad ERROR o CRITICAL.`,
-    evidence: [{ label: 'Filtrar logs', path: '/logs' }],
-  }
+  const matchingLogs = getErrorLogs(getRecentLogs()).filter(
+    (log) => log.application === topApplication[0],
+  )
+  return buildSearchResultMock(
+    `${topApplication[0]} concentra más errores recientes (${topApplication[1]})`,
+    matchingLogs,
+    'No encontré errores recientes para comparar aplicaciones.',
+  )
 }
 
 function answerRecentSummary(normalizedQuestion: string): AiMockResponse | null {
-  if (!normalizedQuestion.includes('resume') || !normalizedQuestion.includes('reciente')) return null
+  if (
+    !normalizedQuestion.includes('resume') ||
+    (!normalizedQuestion.includes('reciente') && !normalizedQuestion.includes('evento'))
+  ) {
+    return null
+  }
 
-  const recentLogs = getRecentLogs()
-  const errors = getErrorLogs(recentLogs)
+  const response = summarizeEventsMock(getRecentLogs())
   const activeIncidents = mockIncidents.filter((incident) => incident.status !== 'RESOLVED')
   const activeAlerts = mockAlerts.filter((alert) => alert.status === 'ACTIVE')
+  response.analysis?.push({
+    title: 'Evidencia encontrada',
+    content: `Como contexto adicional, hay ${activeIncidents.length} incidentes sin resolver y ${activeAlerts.length} reglas de alerta activas en la maqueta.`,
+  })
+  response.evidence = [
+    ...(response.evidence ?? []),
+    { label: 'Ver incidentes', path: '/incidentes' },
+    { label: 'Ver alertas', path: '/alertas' },
+  ]
+  return response
+}
 
-  return {
-    content: `En las últimas 24 horas hay ${recentLogs.length} logs mock, de los cuales ${errors.length} son errores o eventos críticos. También permanecen ${activeIncidents.length} incidentes sin resolver y ${activeAlerts.length} reglas de alerta activas.`,
-    evidence: [
-      { label: 'Explorar logs', path: '/logs' },
-      { label: 'Ver incidentes', path: '/incidentes' },
-      { label: 'Ver alertas', path: '/alertas' },
-    ],
-  }
+function answerPatterns(normalizedQuestion: string): AiMockResponse | null {
+  if (!normalizedQuestion.includes('patron')) return null
+  return detectPatternsMock(mockLogs)
 }
 
 function answerPreviousEvents(normalizedQuestion: string): AiMockResponse | null {
@@ -158,10 +245,23 @@ function answerPreviousEvents(normalizedQuestion: string): AiMockResponse | null
     .filter((log) => new Date(log.timestamp).getTime() < new Date(recentError.timestamp).getTime())
     .slice(0, 2)
 
-  return {
-    content: `Antes de ${recentError.id} se registraron: ${previousLogs.map((log) => `${log.id} (${log.application}): ${log.message}`).join(' Después, ')}. Esta secuencia es una reconstrucción basada únicamente en las marcas de tiempo mock.`,
-    evidence: [{ label: 'Consultar secuencia en logs', path: '/logs' }],
-  }
+  return buildSearchResultMock(
+    `Eventos anteriores a ${recentError.id}`,
+    previousLogs,
+    'No encontré eventos anteriores en la muestra.',
+  )
+}
+
+function answerRelatedEvents(normalizedQuestion: string): AiMockResponse | null {
+  if (!normalizedQuestion.includes('evento') || !normalizedQuestion.includes('relacion')) return null
+
+  const reference = getErrorLogs(getRecentLogs())[0]
+  const related = reference ? findRelatedLogs(reference, mockLogs) : []
+  return buildSearchResultMock(
+    `Eventos posiblemente relacionados con ${reference?.id ?? 'el error reciente'}`,
+    related,
+    'No encontré eventos relacionados mediante las reglas mock.',
+  )
 }
 
 function answerRelatedIncidents(normalizedQuestion: string): AiMockResponse | null {
@@ -169,26 +269,34 @@ function answerRelatedIncidents(normalizedQuestion: string): AiMockResponse | nu
 
   const activeIncidents = mockIncidents.filter((incident) => incident.status !== 'RESOLVED')
   return {
-    content: `Los incidentes activos que parecen relacionados por proximidad temporal son ${activeIncidents.map((incident) => `${incident.id} (${incident.application}, ${incident.severity})`).join(', ')}. Esta relación es simulada y no representa correlación realizada por IA.`,
+    content: 'Relación simulada de incidentes activos',
+    analysis: [
+      {
+        title: 'Resumen',
+        content: `Encontré ${activeIncidents.length} incidentes activos que conviene comparar por aplicación y proximidad temporal.`,
+      },
+      {
+        title: 'Evidencia encontrada',
+        content: activeIncidents
+          .map((incident) => `${incident.id}: ${incident.application}, ${incident.severity}`)
+          .join(' · '),
+      },
+      {
+        title: 'Posible causa',
+        content: 'Podrían estar relacionados por tiempo o dependencia, pero no se realizó correlación distribuida real.',
+      },
+      {
+        title: 'Recomendación',
+        content: 'Sería recomendable comparar sus logs y trace IDs antes de tratarlos como un solo incidente.',
+      },
+    ],
     evidence: [{ label: 'Comparar incidentes', path: '/incidentes' }],
   }
 }
 
 function answerRepeatedErrors(normalizedQuestion: string): AiMockResponse | null {
   if (!normalizedQuestion.includes('error') || !normalizedQuestion.includes('repet')) return null
-
-  const counts = getErrorLogs(mockLogs).reduce<Record<string, number>>(
-    (result, log) => ({ ...result, [log.application]: (result[log.application] ?? 0) + 1 }),
-    {},
-  )
-  const repeated = Object.entries(counts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-
-  return {
-    content: `Agrupando los errores mock por aplicación, los más frecuentes corresponden a ${repeated.map(([application, count]) => `${application} (${count})`).join(', ')}.`,
-    evidence: [{ label: 'Revisar errores', path: '/logs' }],
-  }
+  return detectPatternsMock(mockLogs)
 }
 
 function answerAnomalies(normalizedQuestion: string): AiMockResponse | null {
@@ -215,9 +323,12 @@ function answerFirstReview(normalizedQuestion: string): AiMockResponse | null {
   }
 
   return {
-    content: `Revisaría primero ${priorityIncident.id}: “${priorityIncident.title}”. Tiene severidad CRITICAL, afecta a ${priorityIncident.application} y actualmente está ${priorityIncident.status === 'INVESTIGATING' ? 'en investigación' : 'abierto'}.`,
+    content: `Revisaría primero ${priorityIncident.id}: “${priorityIncident.title}”. Es una priorización simulada basada en severidad y estado.`,
     evidence: [
-      { label: `Abrir ${priorityIncident.id}`, path: '/incidentes' },
+      {
+        label: `Abrir ${priorityIncident.id}`,
+        path: `/incidentes?incident=${priorityIncident.id}`,
+      },
       { label: 'Consultar evidencia en logs', path: '/logs' },
     ],
   }
@@ -229,16 +340,22 @@ export function generateMockAiResponse(question: string): AiMockResponse {
   return (
     answerTraceQuestion(question) ??
     answerLogExplanation(question) ??
+    answerIncidentAnalysis(question) ??
     answerCriticalErrors(normalizedQuestion) ??
+    answerFiveHundreds(normalizedQuestion) ??
+    answerPaymentErrors(normalizedQuestion) ??
     answerTopErrorApplication(normalizedQuestion) ??
     answerRecentSummary(normalizedQuestion) ??
+    answerPatterns(normalizedQuestion) ??
     answerPreviousEvents(normalizedQuestion) ??
+    answerRelatedEvents(normalizedQuestion) ??
     answerRelatedIncidents(normalizedQuestion) ??
     answerRepeatedErrors(normalizedQuestion) ??
     answerAnomalies(normalizedQuestion) ??
     answerFirstReview(normalizedQuestion) ?? {
       content:
-        'No encontré información suficiente en los datos disponibles para responder esta consulta. Prueba con una de las preguntas sugeridas o incluye un log ID o trace ID concreto.',
+        'No encontré información suficiente en los datos disponibles para responder esta consulta. Prueba con “Explica el log log-2091”, “Busca errores 500”, una aplicación o un trace ID concreto.',
+      evidence: [{ label: 'Explorar logs', path: '/logs' }],
     }
   )
 }

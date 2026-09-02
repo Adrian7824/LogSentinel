@@ -7,6 +7,7 @@ import { SeverityBadge } from '../ui/SeverityBadge'
 type LogDetailPanelProps = {
   log: LogEntry | null
   onClose: () => void
+  onAnalyze: (log: LogEntry) => void
 }
 
 const fullDateFormatter = new Intl.DateTimeFormat('es-MX', {
@@ -14,7 +15,7 @@ const fullDateFormatter = new Intl.DateTimeFormat('es-MX', {
   timeStyle: 'medium',
 })
 
-export function LogDetailPanel({ log, onClose }: LogDetailPanelProps) {
+export function LogDetailPanel({ log, onClose, onAnalyze }: LogDetailPanelProps) {
   if (!log) return null
 
   return (
@@ -29,6 +30,18 @@ export function LogDetailPanel({ log, onClose }: LogDetailPanelProps) {
       title="Detalle del evento"
     >
       <p className="text-sm leading-6 text-slate-700">{log.message}</p>
+
+      <button
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-ink-800 px-4 py-3 text-xs font-semibold text-white shadow-sm transition hover:bg-ink-700 sm:w-auto"
+        onClick={() => onAnalyze(log)}
+        type="button"
+      >
+        <Icon className="h-4 w-4 text-cyan-300" name="sparkles" />
+        Explicar con IA
+        <span className="rounded bg-white/10 px-1.5 py-0.5 text-[8px] uppercase tracking-wider text-slate-300">
+          Mock
+        </span>
+      </button>
 
       <dl className="mt-6 grid grid-cols-1 gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:grid-cols-2">
         <div>

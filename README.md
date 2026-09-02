@@ -12,15 +12,17 @@ Actualmente están disponibles:
 - Explorador de logs con búsqueda, filtros, paginación y vista de detalle.
 - Gestión visual de incidentes con filtros, estados, actividad y logs relacionados.
 - Catálogo de alertas con búsqueda, filtros y activación o desactivación local.
-- Asistente conversacional mock con preguntas sugeridas y respuestas basadas en los datos de demostración.
+- Asistente conversacional mock con análisis estructurado de logs e incidentes, consultas por reglas, resúmenes y detección simulada de patrones.
+- Administración mock de usuarios con roles, permisos por módulo y políticas horarias de acceso.
+- Configuración mock organizada por secciones, con preferencias de observabilidad, retención, notificaciones, seguridad y conexiones.
 - Layout responsive para escritorio, tablet y móvil.
-- Rutas preparadas para aplicaciones, usuarios y configuración.
+- Ruta preparada para aplicaciones.
 
 Los datos, estados, conversaciones y cambios mostrados en la interfaz son locales y se reinician al recargar la aplicación. El asistente está identificado como demostración y no consume ningún modelo o API de inteligencia artificial.
 
 ## Funcionalidades previstas
 
-El alcance futuro contempla autenticación y roles, conexiones URL/SSH, ingestión de archivos grandes, integración real con inteligencia artificial, análisis avanzado de logs, correlación de eventos, auditorías, retención de datos, canales de notificación y respaldo de configuraciones.
+El alcance futuro contempla autenticación y RBAC real en backend, conexiones URL/SSH, ingestión de archivos grandes, integración real con inteligencia artificial, análisis avanzado en backend, correlación distribuida de eventos, auditorías, retención efectiva de datos, canales de notificación activos y respaldo de configuraciones.
 
 Estos puntos permanecen documentados como trabajo pendiente en [TASK-006](tasks/TASK-006-alineacion-requisitos-equipo.md). Su presencia en el backlog no significa que estén implementados.
 
@@ -68,6 +70,8 @@ LogSentinel/
 │   │   ├── incidents/    Componentes de incidentes
 │   │   ├── layout/       Sidebar, header y layout principal
 │   │   ├── logs/         Componentes propios del visor de logs
+│   │   ├── settings/     Configuración visual de la plataforma
+│   │   ├── users/        Administración mock de usuarios y permisos
 │   │   └── ui/           Componentes compartidos
 │   ├── data/             Datos mock separados de la interfaz
 │   ├── hooks/            Estado reutilizable de la interfaz
@@ -122,8 +126,8 @@ El uso de `npm.cmd` permite ejecutar el proyecto en Windows aunque PowerShell te
 | `/incidentes` | Seguimiento de incidentes |
 | `/alertas` | Administración visual de reglas de alerta |
 | `/aplicaciones` | Espacio preparado para aplicaciones |
-| `/usuarios` | Espacio preparado para usuarios |
-| `/configuracion` | Espacio preparado para configuración |
+| `/usuarios` | Administración mock de usuarios, roles y acceso |
+| `/configuracion` | Configuración mock general y administrativa |
 
 ## Validaciones
 

@@ -1,8 +1,26 @@
 export type AiMessageRole = 'assistant' | 'user'
 
+export type AiAnalysisSectionTitle =
+  | 'Resumen'
+  | 'Evidencia encontrada'
+  | 'Posible causa'
+  | 'Recomendación'
+
+export type AiAnalysisSection = {
+  title: AiAnalysisSectionTitle
+  content: string
+}
+
 export type AiEvidenceLink = {
   label: string
-  path: '/logs' | '/incidentes' | '/alertas'
+  path:
+    | '/logs'
+    | `/logs?${string}`
+    | '/incidentes'
+    | `/incidentes?${string}`
+    | '/alertas'
+    | '/aplicaciones'
+    | `/aplicaciones?${string}`
 }
 
 export type AiMessage = {
@@ -10,10 +28,12 @@ export type AiMessage = {
   role: AiMessageRole
   content: string
   createdAt: string
+  analysis?: AiAnalysisSection[]
   evidence?: AiEvidenceLink[]
 }
 
 export type AiMockResponse = {
   content: string
+  analysis?: AiAnalysisSection[]
   evidence?: AiEvidenceLink[]
 }

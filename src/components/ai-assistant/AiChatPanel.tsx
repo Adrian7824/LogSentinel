@@ -71,7 +71,7 @@ export function AiChatPanel({ messages, isLoading, onClose, onSend }: AiChatPane
 
       <div className="flex-1 space-y-4 overflow-y-auto bg-slate-50 px-4 py-5 sm:px-5">
         {messages.map((message) => (
-          <AiMessage key={message.id} message={message} />
+          <AiMessage key={message.id} message={message} onNavigate={onClose} />
         ))}
         {isLoading && <AiTypingIndicator />}
         <div ref={messagesEndRef} />
